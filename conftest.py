@@ -43,12 +43,16 @@ def invalid_movie_payload() -> dict:
 
 
 @pytest.fixture()
-def created_movie(api_manager: ApiManager, existing_genre_id: int) -> dict:
-    payload = DataGenerator.generate_movie_data(location="SPB", genre_id=existing_genre_id)
-    response = api_manager.movies_api.create_movie(payload)
+def created_movie(api_manager: ApiManager, movie_payload: dict) -> dict:
+    response = api_manager.movies_api.create_movie(movie_payload)
     movie = response.json()
     yield movie
 
     movie_id = movie.get("id")
     if movie_id is not None:
-        api_manager.movies_api.delete_movie(movie_id, expected_status=(200, 404))
+        api_manager.movies_api.delete_movie(movie_id, expected_status=200)
+
+
+@pytest.fixture()
+def movie_for_deletion(api_manager: ApiManager, movie_payload: dict) -> dict:
+    return api_manager.movies_api.create_movie(movie_payload).json()

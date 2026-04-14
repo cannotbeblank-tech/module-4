@@ -14,7 +14,7 @@ class MoviesAPI(CustomRequester):
     def get_movies(
         self,
         params: dict[str, Any] | None = None,
-        expected_status: int | tuple[int, ...] = 200,
+        expected_status: int = 200,
     ):
         return self.send_request(
             method="GET",
@@ -26,7 +26,7 @@ class MoviesAPI(CustomRequester):
     def get_movie(
         self,
         movie_id: int,
-        expected_status: int | tuple[int, ...] = 200,
+        expected_status: int = 200,
     ):
         return self.send_request(
             method="GET",
@@ -37,7 +37,7 @@ class MoviesAPI(CustomRequester):
     def create_movie(
         self,
         movie_data: dict[str, Any],
-        expected_status: int | tuple[int, ...] = 201,
+        expected_status: int = 201,
     ):
         return self.send_request(
             method="POST",
@@ -50,7 +50,7 @@ class MoviesAPI(CustomRequester):
         self,
         movie_id: int,
         movie_data: dict[str, Any],
-        expected_status: int | tuple[int, ...] = 200,
+        expected_status: int = 200,
         method: str = "PATCH",
     ):
         return self.send_request(
@@ -63,7 +63,7 @@ class MoviesAPI(CustomRequester):
     def delete_movie(
         self,
         movie_id: int,
-        expected_status: int | tuple[int, ...] = (200, 204),
+        expected_status: int = 200,
     ):
         return self.send_request(
             method="DELETE",

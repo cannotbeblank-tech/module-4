@@ -31,6 +31,7 @@ class DataGenerator:
     @staticmethod
     def generate_invalid_movie_data() -> dict:
         return {
+            "name": f"Invalid movie {faker.uuid4()}",
             "imageUrl": "not-a-valid-url",
             "price": 0,
             "description": "",
