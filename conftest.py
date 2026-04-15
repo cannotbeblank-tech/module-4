@@ -43,7 +43,7 @@ def invalid_movie_payload() -> dict:
 
 
 @pytest.fixture()
-def created_movie(api_manager: ApiManager, movie_payload: dict) -> dict:
+def created_movie_with_deletion(api_manager: ApiManager, movie_payload: dict) -> dict:
     response = api_manager.movies_api.create_movie(movie_payload)
     movie = response.json()
     yield movie
@@ -54,5 +54,5 @@ def created_movie(api_manager: ApiManager, movie_payload: dict) -> dict:
 
 
 @pytest.fixture()
-def movie_for_deletion(api_manager: ApiManager, movie_payload: dict) -> dict:
+def created_movie(api_manager: ApiManager, movie_payload: dict) -> dict:
     return api_manager.movies_api.create_movie(movie_payload).json()

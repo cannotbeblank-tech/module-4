@@ -45,15 +45,19 @@ class TestMoviesAPI:
         api_manager.movies_api.delete_movie(spb_movie["id"], expected_status=200)
         api_manager.movies_api.delete_movie(msk_movie["id"], expected_status=200)
 
-    def test_get_movie_by_id(self, api_manager: ApiManager, created_movie: dict):
-        movie_id = created_movie["id"]
+    def test_get_movie_by_id(
+        self,
+        api_manager: ApiManager,
+        created_movie_with_deletion: dict,
+    ):
+        movie_id = created_movie_with_deletion["id"]
 
         response = api_manager.movies_api.get_movie(movie_id)
         movie = response.json()
 
         assert movie["id"] == movie_id
-        assert movie["name"] == created_movie["name"]
-        assert movie["genreId"] == created_movie["genreId"]
+        assert movie["name"] == created_movie_with_deletion["name"]
+        assert movie["genreId"] == created_movie_with_deletion["genreId"]
         assert "reviews" in movie
 
     def test_create_movie(self, api_manager: ApiManager, movie_payload: dict):
@@ -63,47 +67,65 @@ class TestMoviesAPI:
         created_at = datetime.fromisoformat(movie["createdAt"].replace("Z", "+00:00"))
 
         assert persisted_movie["id"] == movie["id"]
-        assert persisted_movie["name"] == movie_payload["name"]
-        assert persisted_movie["price"] == movie_payload["price"]
-        assert persisted_movie["description"] == movie_payload["description"]
-        assert persisted_movie["location"] == movie_payload["location"]
-        assert persisted_movie["genreId"] == movie_payload["genreId"]
+        for actual_movie in (movie, persisted_movie):
+            assert actual_movie["name"] == movie_payload["name"]
+            assert actual_movie["price"] == movie_payload["price"]
+            assert actual_movie["description"] == movie_payload["description"]
+            assert actual_movie["imageUrl"] == movie_payload["imageUrl"]
+            assert actual_movie["location"] == movie_payload["location"]
+            assert actual_movie["published"] == movie_payload["published"]
+            assert actual_movie["genreId"] == movie_payload["genreId"]
         assert abs((datetime.now(timezone.utc) - created_at).total_seconds()) <= 10
         assert persisted_movie["createdAt"] == movie["createdAt"]
         assert "rating" in persisted_movie
 
         api_manager.movies_api.delete_movie(movie["id"], expected_status=200)
 
-    def test_update_movie(self, api_manager: ApiManager, created_movie: dict, movie_payload: dict):
-        movie_id = created_movie["id"]
+    def test_update_movie(
+        self,
+        api_manager: ApiManager,
+        created_movie_with_deletion: dict,
+        movie_payload: dict,
+    ):
+        movie_id = created_movie_with_deletion["id"]
         patch_data = movie_payload.copy()
         patch_data.update(
             {
-                "name": f"UPDATED {created_movie['name']}",
-                "price": created_movie["price"] + 111,
+                "name": f"UPDATED {created_movie_with_deletion['name']}",
+                "price": created_movie_with_deletion["price"] + 111,
                 "description": "Updated description from autotest",
                 "published": False,
             }
         )
 
-        api_manager.movies_api.update_movie(movie_id, patch_data, expected_status=200)
-        movie = api_manager.movies_api.get_movie(movie_id).json()
+        updated_movie = api_manager.movies_api.update_movie(
+            movie_id,
+            patch_data,
+            expected_status=200,
+        ).json()
+        persisted_movie = api_manager.movies_api.get_movie(movie_id).json()
 
-        assert movie["id"] == movie_id
-        assert movie["name"] == patch_data["name"]
-        assert movie["price"] == patch_data["price"]
-        assert movie["description"] == patch_data["description"]
-        assert not movie["published"]
+        for movie in (updated_movie, persisted_movie):
+            assert movie["id"] == movie_id
+            assert movie["name"] == patch_data["name"]
+            assert movie["price"] == patch_data["price"]
+            assert movie["description"] == patch_data["description"]
+            assert not movie["published"]
 
-    def test_delete_movie(self, api_manager: ApiManager, movie_for_deletion: dict):
-        movie = movie_for_deletion
+    def test_delete_movie(self, api_manager: ApiManager, created_movie: dict):
+        movie = created_movie
         movie_id = movie["id"]
 
-        api_manager.movies_api.get_movie(movie_id)
-        api_manager.movies_api.delete_movie(movie_id, expected_status=200)
+        deleted_movie = api_manager.movies_api.delete_movie(movie_id, expected_status=200).json()
         response = api_manager.movies_api.get_movie(movie_id, expected_status=404)
         payload = response.json()
 
+        assert deleted_movie["id"] == movie_id
+        assert deleted_movie["name"] == movie["name"]
+        assert deleted_movie["price"] == movie["price"]
+        assert deleted_movie["description"] == movie["description"]
+        assert deleted_movie["location"] == movie["location"]
+        assert deleted_movie["genreId"] == movie["genreId"]
         assert payload["message"] == "Фильм не найден"
 
     def test_create_movie_with_duplicate_name_error(
