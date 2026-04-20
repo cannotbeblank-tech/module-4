@@ -1,3 +1,9 @@
 pytest==8.3.5
 requests==2.32.3
 faker==37.4.0
+python-dotenv==1.1.1
+pydantic==2.11.4
+allure-pytest==2.15.0
+psycopg2-binary==2.9.10
+pytest-check==2.8.0
+pytest-rerunfailures==15.1

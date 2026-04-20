@@ -39,3 +39,16 @@ class DataGenerator:
             "published": True,
             "genreId": 0,
         }
+
+    @staticmethod
+    def generate_user_data(*, role: str = "USER") -> dict:
+        password = "Qwerty123"
+        return {
+            "email": f"api_user_{faker.uuid4()}@example.com",
+            "fullName": faker.name(),
+            "password": password,
+            "passwordRepeat": password,
+            "verified": True,
+            "banned": False,
+            "roles": [role],
+        }
