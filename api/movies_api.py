@@ -15,35 +15,41 @@ class MoviesAPI(CustomRequester):
         self,
         params: dict[str, Any] | None = None,
         expected_status: int = 200,
+        response_model=None,
     ):
         return self.send_request(
             method="GET",
             endpoint=MOVIES_ENDPOINT,
             params=params,
             expected_status=expected_status,
+            response_model=response_model,
         )
 
     def get_movie(
         self,
         movie_id: int,
         expected_status: int = 200,
+        response_model=None,
     ):
         return self.send_request(
             method="GET",
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
             expected_status=expected_status,
+            response_model=response_model,
         )
 
     def create_movie(
         self,
         movie_data: dict[str, Any],
         expected_status: int = 201,
+        response_model=None,
     ):
         return self.send_request(
             method="POST",
             endpoint=MOVIES_ENDPOINT,
             data=movie_data,
             expected_status=expected_status,
+            response_model=response_model,
         )
 
     def update_movie(
@@ -52,21 +58,25 @@ class MoviesAPI(CustomRequester):
         movie_data: dict[str, Any],
         expected_status: int = 200,
         method: str = "PATCH",
+        response_model=None,
     ):
         return self.send_request(
             method=method,
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
             data=movie_data,
             expected_status=expected_status,
+            response_model=response_model,
         )
 
     def delete_movie(
         self,
         movie_id: int,
         expected_status: int = 200,
+        response_model=None,
     ):
         return self.send_request(
             method="DELETE",
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
             expected_status=expected_status,
+            response_model=response_model,
         )

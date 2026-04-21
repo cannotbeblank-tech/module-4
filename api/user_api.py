@@ -15,21 +15,25 @@ class UserAPI(CustomRequester):
         self,
         user_locator: str,
         expected_status: int = 200,
+        response_model=None,
     ):
         return self.send_request(
             method="GET",
             endpoint=f"{USER_ENDPOINT}/{user_locator}",
             expected_status=expected_status,
+            response_model=response_model,
         )
 
     def create_user(
         self,
         user_data: dict[str, Any],
         expected_status: int = 201,
+        response_model=None,
     ):
         return self.send_request(
             method="POST",
             endpoint=USER_ENDPOINT,
             data=user_data,
             expected_status=expected_status,
+            response_model=response_model,
         )

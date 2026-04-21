@@ -34,7 +34,8 @@ class CustomRequester:
         params: dict[str, Any] | None = None,
         expected_status: int | Iterable[int] = 200,
         need_logging: bool = True,
-    ) -> requests.Response:
+        response_model: Any | None = None,
+    ) -> Any:
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         response = self.session.request(
             method=method,
@@ -54,6 +55,8 @@ class CustomRequester:
                 f"Expected one of: {allowed_statuses}. "
                 f"Response body: {response.text}"
             )
+        if response_model is not None:
+            return response_model.model_validate(response.json())
         return response
 
     def _update_session_headers(self, **kwargs: str) -> None:

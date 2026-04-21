@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, RootModel
 
 
 class GenreResponse(BaseModel):
@@ -8,3 +8,7 @@ class GenreResponse(BaseModel):
 
     id: int
     name: str
+
+
+class GenreListResponse(RootModel[list[GenreResponse]]):
+    pass

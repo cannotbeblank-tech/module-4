@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import pytest
 import requests
+from sqlalchemy.orm import Session
 
 from api.api_manager import ApiManager
 from constants import ADMIN_EMAIL, ADMIN_PASSWORD, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD
-from db.postgres_client import PostgresClient
+from db import DBHelper, get_db_session
 from data.data_generator import DataGenerator
-
-
 @pytest.fixture(scope="session")
 def session() -> requests.Session:
     http_session = requests.Session()
@@ -62,7 +61,7 @@ def common_user_session() -> requests.Session:
 def common_user_api_manager(
     common_user_session: requests.Session,
     super_admin_api_manager: ApiManager,
-    postgres_client: PostgresClient,
+    db_helper: DBHelper,
 ) -> ApiManager:
     user_data = DataGenerator.generate_user_data(role="USER")
     created_user = super_admin_api_manager.user_api.create_user(user_data).json()
@@ -76,8 +75,9 @@ def common_user_api_manager(
         manager.user_roles = login_payload["user"]["roles"]
         yield manager
     finally:
-        deleted_rows = postgres_client.delete_user_by_email(user_data["email"])
-        assert deleted_rows == 1
+        user = db_helper.get_user_by_email(user_data["email"])
+        assert user is not None
+        db_helper.delete_user(user)
 
 
 @pytest.fixture()
@@ -91,15 +91,15 @@ def admin_user_session() -> requests.Session:
 def admin_api_manager(
     admin_user_session: requests.Session,
     super_admin_api_manager: ApiManager,
-    postgres_client: PostgresClient,
+    db_helper: DBHelper,
 ) -> ApiManager:
     user_data = DataGenerator.generate_user_data(role="USER")
     created_user = super_admin_api_manager.user_api.create_user(user_data).json()
     assert created_user["roles"] == ["USER"]
 
-    patched_user = postgres_client.set_user_roles(user_data["email"], ["ADMIN"])
+    patched_user = db_helper.set_user_roles(user_data["email"], ["ADMIN"])
     assert patched_user is not None
-    assert "ADMIN" in patched_user["roles"]
+    assert "ADMIN" in patched_user.roles
 
     manager = ApiManager(admin_user_session)
     try:
@@ -109,18 +109,21 @@ def admin_api_manager(
         manager.user_roles = ["ADMIN"]
         yield manager
     finally:
-        deleted_rows = postgres_client.delete_user_by_email(user_data["email"])
-        assert deleted_rows == 1
+        user = db_helper.get_user_by_email(user_data["email"])
+        assert user is not None
+        db_helper.delete_user(user)
 
 
-@pytest.fixture(scope="session")
-def postgres_client() -> PostgresClient:
-    if not PostgresClient.is_configured():
-        pytest.skip("DB credentials are not configured in .env")
+@pytest.fixture(scope="module")
+def db_session() -> Session:
+    session = get_db_session()
+    yield session
+    session.close()
 
-    client = PostgresClient()
-    yield client
-    client.close()
+
+@pytest.fixture()
+def db_helper(db_session: Session) -> DBHelper:
+    return DBHelper(db_session)
 
 
 @pytest.fixture(scope="session")
@@ -141,16 +144,32 @@ def invalid_movie_payload() -> dict:
 
 
 @pytest.fixture()
-def created_movie_with_deletion(api_manager: ApiManager, movie_payload: dict) -> dict:
-    response = api_manager.movies_api.create_movie(movie_payload)
-    movie = response.json()
-    yield movie
+def movie_factory(super_admin_api_manager: ApiManager, existing_genre_id: int):
+    created_movie_ids: list[int] = []
 
-    movie_id = movie.get("id")
-    if movie_id is not None:
-        api_manager.movies_api.delete_movie(movie_id, expected_status=200)
+    def _factory(
+        api_manager: ApiManager,
+        *,
+        genre_id: int | None = None,
+        location: str | None = None,
+        published: bool = True,
+        payload: dict | None = None,
+    ) -> dict:
+        movie_payload = payload or DataGenerator.generate_movie_data(
+            genre_id=genre_id or existing_genre_id,
+            location=location,
+            published=published,
+        )
+        movie = api_manager.movies_api.create_movie(movie_payload).json()
+        created_movie_ids.append(movie["id"])
+        return movie
+
+    yield _factory
+
+    for movie_id in reversed(created_movie_ids):
+        super_admin_api_manager.movies_api.delete_movie(movie_id, expected_status=200)
 
 
 @pytest.fixture()
-def created_movie(api_manager: ApiManager, movie_payload: dict) -> dict:
-    return api_manager.movies_api.create_movie(movie_payload).json()
+def created_movie(api_manager: ApiManager, movie_factory) -> dict:
+    return movie_factory(api_manager)
