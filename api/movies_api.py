@@ -4,6 +4,7 @@ from typing import Any
 
 from constants import MOVIES_ENDPOINT, API_BASE_URL
 from custom_requester.custom_requester import CustomRequester
+from models.movie_models import MovieDetails, MovieListResponse, MovieSummary
 
 
 class MoviesAPI(CustomRequester):
@@ -17,6 +18,9 @@ class MoviesAPI(CustomRequester):
         expected_status: int = 200,
         response_model=None,
     ):
+        if response_model is None and all(200 <= status < 300 for status in self._normalize_expected_status(expected_status)):
+            response_model = MovieListResponse
+
         return self.send_request(
             method="GET",
             endpoint=MOVIES_ENDPOINT,
@@ -31,6 +35,9 @@ class MoviesAPI(CustomRequester):
         expected_status: int = 200,
         response_model=None,
     ):
+        if response_model is None and all(200 <= status < 300 for status in self._normalize_expected_status(expected_status)):
+            response_model = MovieDetails
+
         return self.send_request(
             method="GET",
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
@@ -44,6 +51,9 @@ class MoviesAPI(CustomRequester):
         expected_status: int = 201,
         response_model=None,
     ):
+        if response_model is None and all(200 <= status < 300 for status in self._normalize_expected_status(expected_status)):
+            response_model = MovieSummary
+
         return self.send_request(
             method="POST",
             endpoint=MOVIES_ENDPOINT,
@@ -60,6 +70,9 @@ class MoviesAPI(CustomRequester):
         method: str = "PATCH",
         response_model=None,
     ):
+        if response_model is None and all(200 <= status < 300 for status in self._normalize_expected_status(expected_status)):
+            response_model = MovieSummary
+
         return self.send_request(
             method=method,
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",
@@ -74,6 +87,9 @@ class MoviesAPI(CustomRequester):
         expected_status: int = 200,
         response_model=None,
     ):
+        if response_model is None and all(200 <= status < 300 for status in self._normalize_expected_status(expected_status)):
+            response_model = MovieSummary
+
         return self.send_request(
             method="DELETE",
             endpoint=f"{MOVIES_ENDPOINT}/{movie_id}",

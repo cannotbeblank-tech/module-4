@@ -5,7 +5,6 @@ import pytest
 
 from api.api_manager import ApiManager
 from db.db_helper import DBHelper
-from models.genre_models import GenreListResponse
 
 
 @pytest.mark.api
@@ -23,7 +22,7 @@ class TestGenresAPI:
         unauthorized_api_manager: ApiManager,
         db_helper: DBHelper,
     ):
-        genres_response = unauthorized_api_manager.genres_api.get_genres(response_model=GenreListResponse)
+        genres_response = unauthorized_api_manager.genres_api.get_genres()
         db_genres = db_helper.get_all_genres()
 
         response_pairs = sorted((genre.id, genre.name) for genre in genres_response.root)

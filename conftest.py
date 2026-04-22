@@ -128,9 +128,9 @@ def db_helper(db_session: Session) -> DBHelper:
 
 @pytest.fixture(scope="session")
 def existing_genre_id(api_manager: ApiManager) -> int:
-    genres = api_manager.genres_api.get_genres().json()
-    assert isinstance(genres, list) and genres, "GET /genres должен вернуть хотя бы один жанр"
-    return genres[0]["id"]
+    genres_response = api_manager.genres_api.get_genres()
+    assert genres_response.root, "GET /genres должен вернуть хотя бы один жанр"
+    return genres_response.root[0].id
 
 
 @pytest.fixture()
@@ -144,9 +144,21 @@ def invalid_movie_payload() -> dict:
 
 
 @pytest.fixture()
-def movie_factory(super_admin_api_manager: ApiManager, existing_genre_id: int):
+def track_movie_id(super_admin_api_manager: ApiManager):
     created_movie_ids: list[int] = []
 
+    def _track(movie_id: int) -> int:
+        created_movie_ids.append(movie_id)
+        return movie_id
+
+    yield _track
+
+    for movie_id in reversed(created_movie_ids):
+        super_admin_api_manager.movies_api.delete_movie(movie_id, expected_status=(200, 404))
+
+
+@pytest.fixture()
+def movie_factory(existing_genre_id: int, track_movie_id):
     def _factory(
         api_manager: ApiManager,
         *,
@@ -160,14 +172,11 @@ def movie_factory(super_admin_api_manager: ApiManager, existing_genre_id: int):
             location=location,
             published=published,
         )
-        movie = api_manager.movies_api.create_movie(movie_payload).json()
-        created_movie_ids.append(movie["id"])
-        return movie
+        movie = api_manager.movies_api.create_movie(movie_payload)
+        track_movie_id(movie.id)
+        return movie.model_dump(mode="json", by_alias=True)
 
     yield _factory
-
-    for movie_id in reversed(created_movie_ids):
-        super_admin_api_manager.movies_api.delete_movie(movie_id, expected_status=200)
 
 
 @pytest.fixture()

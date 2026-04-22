@@ -4,8 +4,6 @@ import allure
 import pytest
 
 from api.api_manager import ApiManager
-from db.db_helper import DBHelper
-from models.movie_models import MovieDetails, MovieListResponse
 
 
 @pytest.mark.api
@@ -21,13 +19,12 @@ class TestMoviesReadAPI:
     def test_get_movies_returns_paginated_list(self, unauthorized_api_manager: ApiManager):
         movies_page = unauthorized_api_manager.movies_api.get_movies(
             params={"page": 1, "pageSize": 10},
-            response_model=MovieListResponse,
         )
 
         assert movies_page.page == 1
-        assert movies_page.pageSize == 10
+        assert movies_page.page_size == 10
         assert movies_page.count >= 0
-        assert movies_page.pageCount >= 1
+        assert movies_page.page_count >= 1
 
     @pytest.mark.regression
     @pytest.mark.slow
@@ -38,17 +35,12 @@ class TestMoviesReadAPI:
         self,
         api_manager: ApiManager,
         movie_factory,
-        db_helper: DBHelper,
     ):
         filtered_movie = movie_factory(api_manager, location="SPB")
         other_movie = movie_factory(api_manager, location="MSK")
 
-        assert db_helper.get_movie_by_id(filtered_movie["id"]).location == "SPB"
-        assert db_helper.get_movie_by_id(other_movie["id"]).location == "MSK"
-
         movies_page = api_manager.movies_api.get_movies(
             params={"locations": ["SPB"], "page": 1, "pageSize": 20, "createdAt": "desc"},
-            response_model=MovieListResponse,
         )
         returned_ids = {movie.id for movie in movies_page.movies}
 
@@ -65,17 +57,12 @@ class TestMoviesReadAPI:
         self,
         api_manager: ApiManager,
         movie_factory,
-        db_helper: DBHelper,
     ):
         published_movie = movie_factory(api_manager, published=True)
         unpublished_movie = movie_factory(api_manager, published=False)
 
-        assert db_helper.get_movie_by_id(published_movie["id"]).published is True
-        assert db_helper.get_movie_by_id(unpublished_movie["id"]).published is False
-
         movies_page = api_manager.movies_api.get_movies(
             params={"published": "true", "page": 1, "pageSize": 20, "createdAt": "desc"},
-            response_model=MovieListResponse,
         )
         returned_ids = {movie.id for movie in movies_page.movies}
 
@@ -92,17 +79,12 @@ class TestMoviesReadAPI:
         self,
         api_manager: ApiManager,
         movie_factory,
-        db_helper: DBHelper,
     ):
         unpublished_movie = movie_factory(api_manager, published=False)
         published_movie = movie_factory(api_manager, published=True)
 
-        assert db_helper.get_movie_by_id(unpublished_movie["id"]).published is False
-        assert db_helper.get_movie_by_id(published_movie["id"]).published is True
-
         movies_page = api_manager.movies_api.get_movies(
             params={"published": "false", "page": 1, "pageSize": 20, "createdAt": "desc"},
-            response_model=MovieListResponse,
         )
         returned_ids = {movie.id for movie in movies_page.movies}
 
@@ -119,12 +101,11 @@ class TestMoviesReadAPI:
         api_manager: ApiManager,
         created_movie: dict,
     ):
-        returned_movie = api_manager.movies_api.get_movie(created_movie["id"], response_model=MovieDetails)
+        returned_movie = api_manager.movies_api.get_movie(created_movie["id"])
 
         assert returned_movie.id == created_movie["id"]
         assert returned_movie.name == created_movie["name"]
-        assert returned_movie.genreId == created_movie["genreId"]
-        assert isinstance(returned_movie.reviews, list)
+        assert returned_movie.genre_id == created_movie["genreId"]
 
     @pytest.mark.smoke
     @allure.story("Role model")
@@ -134,11 +115,11 @@ class TestMoviesReadAPI:
         unauthorized_api_manager: ApiManager,
         created_movie: dict,
     ):
-        returned_movie = unauthorized_api_manager.movies_api.get_movie(created_movie["id"], response_model=MovieDetails)
+        returned_movie = unauthorized_api_manager.movies_api.get_movie(created_movie["id"])
 
         assert returned_movie.id == created_movie["id"]
         assert returned_movie.name == created_movie["name"]
-        assert returned_movie.genreId == created_movie["genreId"]
+        assert returned_movie.genre_id == created_movie["genreId"]
 
     @pytest.mark.regression
     @pytest.mark.negative

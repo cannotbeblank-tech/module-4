@@ -8,7 +8,6 @@ import pytest_check as check
 
 from api.api_manager import ApiManager
 from db.db_helper import DBHelper
-from models.movie_models import MovieSummary
 
 
 @pytest.mark.api
@@ -27,30 +26,28 @@ class TestMoviesWriteAPI:
         api_manager: ApiManager,
         movie_payload: dict,
         db_helper: DBHelper,
+        track_movie_id,
     ):
-        movie = api_manager.movies_api.create_movie(movie_payload, response_model=MovieSummary)
+        movie = api_manager.movies_api.create_movie(movie_payload)
+        track_movie_id(movie.id)
+        db_movie = db_helper.get_movie_by_id(movie.id)
 
-        try:
-            db_movie = db_helper.get_movie_by_id(movie.id)
-
-            assert db_movie is not None
-            check.equal(movie.name, movie_payload["name"])
-            check.equal(movie.price, movie_payload["price"])
-            check.equal(movie.description, movie_payload["description"])
-            check.equal(str(movie.imageUrl), movie_payload["imageUrl"])
-            check.equal(movie.location, movie_payload["location"])
-            check.equal(movie.published, movie_payload["published"])
-            check.equal(movie.genreId, movie_payload["genreId"])
-            check.is_true(abs((datetime.now(timezone.utc) - movie.createdAt).total_seconds()) <= 10)
-            check.equal(db_movie.id, movie.id)
-            check.equal(db_movie.name, movie_payload["name"])
-            check.equal(db_movie.description, movie_payload["description"])
-            check.equal(db_movie.price, movie_payload["price"])
-            check.equal(db_movie.location, movie_payload["location"])
-            check.equal(db_movie.published, movie_payload["published"])
-            check.equal(db_movie.genre_id, movie_payload["genreId"])
-        finally:
-            api_manager.movies_api.delete_movie(movie.id, expected_status=200)
+        assert db_movie is not None
+        check.equal(movie.name, movie_payload["name"])
+        check.equal(movie.price, movie_payload["price"])
+        check.equal(movie.description, movie_payload["description"])
+        check.equal(str(movie.image_url), movie_payload["imageUrl"])
+        check.equal(movie.location, movie_payload["location"])
+        check.equal(movie.published, movie_payload["published"])
+        check.equal(movie.genre_id, movie_payload["genreId"])
+        check.is_true(abs((datetime.now(timezone.utc) - movie.created_at).total_seconds()) <= 10)
+        check.equal(db_movie.id, movie.id)
+        check.equal(db_movie.name, movie_payload["name"])
+        check.equal(db_movie.description, movie_payload["description"])
+        check.equal(db_movie.price, movie_payload["price"])
+        check.equal(db_movie.location, movie_payload["location"])
+        check.equal(db_movie.published, movie_payload["published"])
+        check.equal(db_movie.genre_id, movie_payload["genreId"])
 
     @pytest.mark.regression
     @pytest.mark.db
@@ -77,7 +74,6 @@ class TestMoviesWriteAPI:
             created_movie["id"],
             patch_data,
             expected_status=200,
-            response_model=MovieSummary,
         )
         db_movie = db_helper.get_movie_by_id(created_movie["id"])
 
@@ -104,7 +100,6 @@ class TestMoviesWriteAPI:
         deleted_movie = api_manager.movies_api.delete_movie(
             created_movie["id"],
             expected_status=200,
-            response_model=MovieSummary,
         )
         db_movie = db_helper.get_movie_by_id(created_movie["id"])
 
@@ -113,7 +108,7 @@ class TestMoviesWriteAPI:
         assert deleted_movie.price == created_movie["price"]
         assert deleted_movie.description == created_movie["description"]
         assert deleted_movie.location == created_movie["location"]
-        assert deleted_movie.genreId == created_movie["genreId"]
+        assert deleted_movie.genre_id == created_movie["genreId"]
         assert db_movie is None
 
     @pytest.mark.regression
@@ -126,18 +121,17 @@ class TestMoviesWriteAPI:
         api_manager: ApiManager,
         movie_payload: dict,
         db_helper: DBHelper,
+        track_movie_id,
     ):
-        created_movie = api_manager.movies_api.create_movie(movie_payload, response_model=MovieSummary)
-        try:
-            duplicate_response = api_manager.movies_api.create_movie(movie_payload, expected_status=409)
-            matching_movies = db_helper.get_movies_by_name(movie_payload["name"])
+        created_movie = api_manager.movies_api.create_movie(movie_payload)
+        track_movie_id(created_movie.id)
+        duplicate_response = api_manager.movies_api.create_movie(movie_payload, expected_status=409)
+        matching_movies = db_helper.get_movies_by_name(movie_payload["name"])
 
-            duplicate_payload = duplicate_response.json()
-            assert duplicate_payload["message"] == "Фильм с таким названием уже существует"
-            assert len(matching_movies) == 1
-            assert matching_movies[0].id == created_movie.id
-        finally:
-            api_manager.movies_api.delete_movie(created_movie.id, expected_status=200)
+        duplicate_payload = duplicate_response.json()
+        assert duplicate_payload["message"] == "Фильм с таким названием уже существует"
+        assert len(matching_movies) == 1
+        assert matching_movies[0].id == created_movie.id
 
     @pytest.mark.regression
     @pytest.mark.negative

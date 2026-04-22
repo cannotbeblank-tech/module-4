@@ -6,7 +6,6 @@ import pytest
 from api.api_manager import ApiManager
 from db.db_helper import DBHelper
 from data.data_generator import DataGenerator
-from models.movie_models import MovieSummary
 
 
 @pytest.mark.api
@@ -108,22 +107,18 @@ class TestMoviesRoleAPI:
         super_admin_api_manager: ApiManager,
         existing_genre_id: int,
         db_helper: DBHelper,
+        track_movie_id,
     ):
         movie_payload = DataGenerator.generate_movie_data(genre_id=existing_genre_id)
 
-        created_movie = super_admin_api_manager.movies_api.create_movie(
-            movie_payload,
-            response_model=MovieSummary,
-        )
-        try:
-            db_movie = db_helper.get_movie_by_id(created_movie.id)
+        created_movie = super_admin_api_manager.movies_api.create_movie(movie_payload)
+        track_movie_id(created_movie.id)
+        db_movie = db_helper.get_movie_by_id(created_movie.id)
 
-            assert created_movie.name == movie_payload["name"]
-            assert created_movie.genreId == movie_payload["genreId"]
-            assert db_movie is not None
-            assert db_movie.name == movie_payload["name"]
-        finally:
-            super_admin_api_manager.movies_api.delete_movie(created_movie.id, expected_status=200)
+        assert created_movie.name == movie_payload["name"]
+        assert created_movie.genre_id == movie_payload["genreId"]
+        assert db_movie is not None
+        assert db_movie.name == movie_payload["name"]
 
     @pytest.mark.regression
     @pytest.mark.negative
@@ -169,7 +164,6 @@ class TestMoviesRoleAPI:
         deleted_movie = super_admin_api_manager.movies_api.delete_movie(
             created_movie["id"],
             expected_status=200,
-            response_model=MovieSummary,
         )
         db_movie = db_helper.get_movie_by_id(created_movie["id"])
 

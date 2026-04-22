@@ -7,25 +7,25 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class MovieGenre(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     id: int | None = None
     name: str
 
 
 class MovieSummary(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     id: int
     name: str
     price: int
     description: str
-    imageUrl: HttpUrl | None = None
+    image_url: HttpUrl | None = Field(default=None, alias="imageUrl")
     location: Literal["MSK", "SPB"]
     published: bool
-    rating: int
-    genreId: int
-    createdAt: datetime
+    rating: float
+    genre_id: int = Field(alias="genreId")
+    created_at: datetime = Field(alias="createdAt")
     genre: MovieGenre
 
 
@@ -34,10 +34,10 @@ class MovieDetails(MovieSummary):
 
 
 class MovieListResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     movies: list[MovieSummary]
     count: int
     page: int
-    pageSize: int
-    pageCount: int
+    page_size: int = Field(alias="pageSize")
+    page_count: int = Field(alias="pageCount")
