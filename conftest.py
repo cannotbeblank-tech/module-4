@@ -64,9 +64,9 @@ def common_user_api_manager(
     db_helper: DBHelper,
 ) -> ApiManager:
     user_data = DataGenerator.generate_user_data(role="USER")
-    created_user = super_admin_api_manager.user_api.create_user(user_data).json()
-    assert created_user["email"] == user_data["email"]
-    assert created_user["roles"] == ["USER"]
+    created_user = super_admin_api_manager.user_api.create_user(user_data)
+    assert created_user.email == user_data["email"]
+    assert created_user.roles == ["USER"]
 
     manager = ApiManager(common_user_session)
     try:
@@ -94,8 +94,8 @@ def admin_api_manager(
     db_helper: DBHelper,
 ) -> ApiManager:
     user_data = DataGenerator.generate_user_data(role="USER")
-    created_user = super_admin_api_manager.user_api.create_user(user_data).json()
-    assert created_user["roles"] == ["USER"]
+    created_user = super_admin_api_manager.user_api.create_user(user_data)
+    assert created_user.roles == ["USER"]
 
     patched_user = db_helper.set_user_roles(user_data["email"], ["ADMIN"])
     assert patched_user is not None

@@ -128,8 +128,7 @@ class TestMoviesWriteAPI:
         duplicate_response = api_manager.movies_api.create_movie(movie_payload, expected_status=409)
         matching_movies = db_helper.get_movies_by_name(movie_payload["name"])
 
-        duplicate_payload = duplicate_response.json()
-        assert duplicate_payload["message"] == "Фильм с таким названием уже существует"
+        assert duplicate_response.message == "Фильм с таким названием уже существует"
         assert len(matching_movies) == 1
         assert matching_movies[0].id == created_movie.id
 
@@ -150,8 +149,7 @@ class TestMoviesWriteAPI:
         )
         matching_movies = db_helper.get_movies_by_name(invalid_movie_payload["name"])
 
-        payload = response.json()
-        assert payload["message"] == [
+        assert response.message == [
             "Неверная ссылка",
             "Поле location должно быть одним из: MSK, SPB",
         ]
@@ -176,8 +174,7 @@ class TestMoviesWriteAPI:
         )
         matching_movies = db_helper.get_movies_by_name(patch_data["name"])
 
-        payload = response.json()
-        assert payload["message"] == "Фильм не найден"
+        assert response.message == "Фильм не найден"
         assert not matching_movies
 
     @pytest.mark.regression
@@ -187,5 +184,4 @@ class TestMoviesWriteAPI:
     def test_delete_movie_with_nonexistent_id_error(self, api_manager: ApiManager):
         response = api_manager.movies_api.delete_movie(999999999, expected_status=404)
 
-        payload = response.json()
-        assert payload["message"] == "Фильм не найден"
+        assert response.message == "Фильм не найден"

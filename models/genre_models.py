@@ -12,3 +12,9 @@ class GenreResponse(BaseModel):
 
 class GenreListResponse(RootModel[list[GenreResponse]]):
     pass
+
+
+class ErrorGenreList(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    message: str | list[str]

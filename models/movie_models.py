@@ -41,3 +41,21 @@ class MovieListResponse(BaseModel):
     page: int
     page_size: int = Field(alias="pageSize")
     page_count: int = Field(alias="pageCount")
+
+
+class ErrorMovieList(BaseModel):
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    message: str | list[str]
+
+
+class ErrorMovieDetails(BaseModel):
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    message: str | list[str]
+
+
+class ErrorMovieSummary(BaseModel):
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    message: str | list[str]

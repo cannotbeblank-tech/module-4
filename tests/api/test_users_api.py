@@ -23,8 +23,7 @@ class TestUsersAPI:
             expected_status=403,
         )
 
-        payload = response.json()
-        assert payload["message"] == "Forbidden resource"
+        assert response.message == "Forbidden resource"
 
     @pytest.mark.parametrize(
         "actor_fixture",
@@ -42,7 +41,6 @@ class TestUsersAPI:
 
         response = actor.user_api.get_user(actor.user_email)
 
-        payload = response.json()
-        assert payload["email"] == actor.user_email
-        assert payload["roles"] == actor.user_roles
-        assert payload["verified"] is True
+        assert response.email == actor.user_email
+        assert response.roles == actor.user_roles
+        assert response.verified is True

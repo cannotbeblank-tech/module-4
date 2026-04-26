@@ -17,7 +17,7 @@ class AuthAPI(CustomRequester):
         user_data: dict[str, Any],
         expected_status: int = 201,
     ):
-        return self.send_request(
+        return self._send_request(
             method="POST",
             endpoint=REGISTER_ENDPOINT,
             data=user_data,
@@ -29,7 +29,7 @@ class AuthAPI(CustomRequester):
         login_data: dict[str, Any],
         expected_status: int = 200,
     ):
-        return self.send_request(
+        return self._send_request(
             method="POST",
             endpoint=LOGIN_ENDPOINT,
             data=login_data,

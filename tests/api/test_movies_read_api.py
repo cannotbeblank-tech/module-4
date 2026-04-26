@@ -131,8 +131,7 @@ class TestMoviesReadAPI:
             expected_status=400,
         )
 
-        payload = response.json()
-        assert payload["message"] == ["Поле pageSize имеет максимальную величину 20"]
+        assert response.message == ["Поле pageSize имеет максимальную величину 20"]
 
     @pytest.mark.regression
     @pytest.mark.negative
@@ -144,8 +143,7 @@ class TestMoviesReadAPI:
             expected_status=400,
         )
 
-        payload = response.json()
-        assert payload["message"] == ["Поле page имеет минимальную величину 1"]
+        assert response.message == ["Поле page имеет минимальную величину 1"]
 
     @pytest.mark.regression
     @pytest.mark.negative
@@ -157,8 +155,7 @@ class TestMoviesReadAPI:
             expected_status=400,
         )
 
-        payload = response.json()
-        assert payload["message"] == "Некорректные данные"
+        assert response.message == "Некорректные данные"
 
     @pytest.mark.regression
     @pytest.mark.negative
@@ -170,8 +167,7 @@ class TestMoviesReadAPI:
             expected_status=400,
         )
 
-        payload = response.json()
-        assert payload["message"] == ["Поле pageSize имеет минимальную величину 1"]
+        assert response.message == ["Поле pageSize имеет минимальную величину 1"]
 
     @pytest.mark.regression
     @pytest.mark.negative
@@ -180,5 +176,4 @@ class TestMoviesReadAPI:
     def test_get_movie_with_nonexistent_id_error(self, api_manager: ApiManager):
         response = api_manager.movies_api.get_movie(999999999, expected_status=404)
 
-        payload = response.json()
-        assert payload["message"] == "Фильм не найден"
+        assert response.message == "Фильм не найден"

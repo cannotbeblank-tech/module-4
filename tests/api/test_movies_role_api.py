@@ -31,8 +31,7 @@ class TestMoviesRoleAPI:
         )
         matching_movies = db_helper.get_movies_by_name(movie_payload["name"])
 
-        payload = response.json()
-        assert payload["message"] == "Unauthorized"
+        assert response.message == "Unauthorized"
         assert not matching_movies
 
     @pytest.mark.regression
@@ -52,8 +51,7 @@ class TestMoviesRoleAPI:
         )
         db_movie = db_helper.get_movie_by_id(created_movie["id"])
 
-        payload = response.json()
-        assert payload["message"] == "Unauthorized"
+        assert response.message == "Unauthorized"
         assert db_movie is not None
         assert db_movie.name == created_movie["name"]
 
@@ -73,8 +71,7 @@ class TestMoviesRoleAPI:
         )
         db_movie = db_helper.get_movie_by_id(created_movie["id"])
 
-        payload = response.json()
-        assert payload["message"] == "Unauthorized"
+        assert response.message == "Unauthorized"
         assert db_movie is not None
         assert db_movie.id == created_movie["id"]
 
@@ -95,8 +92,7 @@ class TestMoviesRoleAPI:
         )
         matching_movies = db_helper.get_movies_by_name(movie_payload["name"])
 
-        payload = response.json()
-        assert payload["message"] == "Forbidden resource"
+        assert response.message == "Forbidden resource"
         assert not matching_movies
 
     @pytest.mark.regression
@@ -144,8 +140,7 @@ class TestMoviesRoleAPI:
         response = actor.movies_api.delete_movie(created_movie["id"], expected_status=403)
         db_movie = db_helper.get_movie_by_id(created_movie["id"])
 
-        payload = response.json()
-        assert payload["message"] == "Forbidden resource"
+        assert response.message == "Forbidden resource"
         assert db_movie is not None
         assert db_movie.id == created_movie["id"]
 
