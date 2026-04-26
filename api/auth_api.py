@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from constants import AUTH_BASE_URL, LOGIN_ENDPOINT, REGISTER_ENDPOINT
@@ -16,7 +17,7 @@ class AuthAPI(CustomRequester):
         user_data: dict[str, Any],
         expected_status: int = 201,
     ):
-        return self.send_request(
+        return self._send_request(
             method="POST",
             endpoint=REGISTER_ENDPOINT,
             data=user_data,
@@ -28,7 +29,7 @@ class AuthAPI(CustomRequester):
         login_data: dict[str, Any],
         expected_status: int = 200,
     ):
-        return self.send_request(
+        return self._send_request(
             method="POST",
             endpoint=LOGIN_ENDPOINT,
             data=login_data,
@@ -37,7 +38,17 @@ class AuthAPI(CustomRequester):
 
     def authenticate(self, user_creds: tuple[str, str]) -> dict[str, Any]:
         login_data = {"email": user_creds[0], "password": user_creds[1]}
-        response_json = self.login_user(login_data=login_data, expected_status=200).json()
+        last_error: Exception | None = None
+
+        for _ in range(3):
+            try:
+                response_json = self.login_user(login_data=login_data, expected_status=200).json()
+                break
+            except ValueError as error:
+                last_error = error
+                time.sleep(1)
+        else:
+            raise last_error if last_error is not None else RuntimeError("Authentication failed")
 
         if "accessToken" not in response_json:
             raise KeyError("accessToken is missing in login response")

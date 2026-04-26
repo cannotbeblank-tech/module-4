@@ -26,7 +26,7 @@ class CustomRequester:
             return (expected_status,)
         return tuple(expected_status)
 
-    def send_request(
+    def _send_request(
         self,
         method: str,
         endpoint: str,
@@ -34,7 +34,9 @@ class CustomRequester:
         params: dict[str, Any] | None = None,
         expected_status: int | Iterable[int] = 200,
         need_logging: bool = True,
-    ) -> requests.Response:
+        success_model: Any | None = None,
+        error_model: Any | None = None,
+    ) -> Any:
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         response = self.session.request(
             method=method,
@@ -54,6 +56,15 @@ class CustomRequester:
                 f"Expected one of: {allowed_statuses}. "
                 f"Response body: {response.text}"
             )
+
+        selected_response_model = None
+        if success_model is not None and 200 <= response.status_code < 300:
+            selected_response_model = success_model
+        elif error_model is not None and 400 <= response.status_code < 600:
+            selected_response_model = error_model
+
+        if selected_response_model is not None:
+            return selected_response_model.model_validate(response.json())
         return response
 
     def _update_session_headers(self, **kwargs: str) -> None:
